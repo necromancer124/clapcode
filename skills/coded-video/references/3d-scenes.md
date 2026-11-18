@@ -17,7 +17,7 @@ Use real 3D when the brief asks for depth, a product, a device, a mechanism, an 
 - Create the renderer with `preserveDrawingBuffer: true` so each captured frame is the one just drawn.
 - Animation clips from a loaded model: create an `AnimationMixer` once, then in `renderAt` call `mixer.setTime(t)`. Never call `mixer.update(delta)`.
 - Particles, dust and jitter: precompute positions with the seeded `rng` at load time, then move them as a function of `t`.
-- `--gl swiftshader` gives identical pixels on every machine; the default `--gl gpu` is about 3–4× faster on machines with a GPU.
+- `--gl swiftshader` renders in software, so frames look the same on any machine (tiny pixel noise is possible between runs on some systems); the default `--gl gpu` is about 3–4× faster on machines with a GPU.
 
 ## Looks that read as "presentable"
 **Lighting** (the biggest single upgrade over flat 2D):

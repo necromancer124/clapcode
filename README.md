@@ -5,6 +5,18 @@
 coded-video is an [Agent Skill](https://agentskills.io/specification) and Claude Code plugin. Your assistant first writes a scene-by-scene brief. Once you say go, it builds the animation as HTML, CSS, SVG and JavaScript (or real, lit 3D with the bundled Three.js), then renders it frame by frame into an MP4.
 
 <!-- SHOWCASE -->
+### Showcase
+
+**A 15-second 3D product tutorial**, made by a fresh Claude Opus session from one phone photo of a supermarket shelf: brief first, then lit 3D (three.js), camera moves, pinned fact cards and step captions. The brand is made up for this demo.
+
+![3D tutorial: a noodle cup is opened, filled from a kettle, closed, timed and stirred](docs/noodle-tutorial-3d.gif)
+
+**Engineering diagrams in motion**: a few seconds from a longer coded explainer, showing what the skill can draw: isometric 3D parts that assemble themselves, labelled callouts, camera cones sweeping a scene, laser beams and live readouts that update every frame.
+
+![Coded explainer clips: parts assemble with labels, camera cones sweep, lasers align while readouts update](docs/align-highlights.gif)
+
+**The two starters** that ship with the skill, rendered as they are:
+
 | 3D starter (`template-3d.html`) | 2D starter (`template.html`) |
 | --- | --- |
 | ![3D starter: a lit product on a turntable with a pinned callout](docs/starter-3d.gif) | ![2D starter: title, bar chart and counter](docs/starter-2d.gif) |
@@ -66,7 +78,7 @@ python skills/coded-video/scripts/render.py skills/coded-video/assets/template.h
 python skills/coded-video/scripts/render.py skills/coded-video/assets/template-3d.html --output output/starter-3d.mp4 --sheet output/starter-3d-sheet.png
 ```
 
-Useful flags: `--sheet sheet.png` for a one-frame-per-second contact sheet, `--stills 1.5,4.9` for single frames, `--scale 0.5` for a half-size draft, `--start`/`--end` to render one section, `--fps` to override the page, `--audio track.mp3` to add a soundtrack, `--gl swiftshader` for software 3D with identical pixels on every machine (the default uses the GPU and is 3–4× faster). The script prints the frame count, duration and size measured from the finished file.
+Useful flags: `--sheet sheet.png` for a one-frame-per-second contact sheet, `--stills 1.5,4.9` for single frames, `--scale 0.5` for a half-size draft, `--start`/`--end` to render one section, `--fps` to override the page, `--audio track.mp3` to add a soundtrack, `--gl swiftshader` for software-only 3D that looks the same on any machine (the default uses the GPU and is 3–4× faster). The script prints the frame count, duration and size measured from the finished file.
 
 The renderer serves the page's own folder on a private local address and blocks every other host unless you pass `--allow-network`, so bundle fonts, images and models locally. **Render trusted HTML only:** blocking the network is not a sandbox.
 
