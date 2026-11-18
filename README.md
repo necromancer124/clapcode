@@ -5,6 +5,12 @@
 coded-video is an [Agent Skill](https://agentskills.io/specification) and Claude Code plugin. Your assistant first writes a scene-by-scene brief. Once you say go, it builds the animation as HTML, CSS, SVG and JavaScript (or real, lit 3D with the bundled Three.js), then renders it frame by frame into an MP4.
 
 <!-- SHOWCASE -->
+### Showcase
+
+**A 15-second 3D product tutorial**, made by a fresh Claude Opus session from one phone photo of a supermarket shelf: brief first, then lit 3D (three.js), camera moves, pinned fact cards and step captions. The brand is made up for this demo.
+
+![3D tutorial: a noodle cup is opened, filled from a kettle, closed, timed and stirred](docs/noodle-tutorial-3d.gif)
+
 | 3D starter (`template-3d.html`) | 2D starter (`template.html`) |
 | --- | --- |
 | ![3D starter: a lit product on a turntable with a pinned callout](docs/starter-3d.gif) | ![2D starter: title, bar chart and counter](docs/starter-2d.gif) |
