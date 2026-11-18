@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Coded video</title>
+<!--
+  Coded video starter.
+  Contract used by scripts/render.py:
+    window.VIDEO    = { width, height, fps, duration }   (pixels, frames per second, seconds)
+    window.renderAt = function (t) { ... }                pure function of t in seconds
+  Open this file in a browser to preview it: it plays, and the bar at the bottom scrubs.
+  Add ?t=2.5 to the URL to freeze on one moment.
+-->
+<style>
+  :root {
+    --bg: #101820;
+    --ink: #f4efe6;
+    --muted: #8fa1b3;
+    --accent: #ff8a4c;
+    --accent-2: #4cc9a0;
+    --line: #2a3a4a;
+  }
+  html, body { margin: 0; background: #000; }
+  #stage {
+    position: absolute; left: 0; top: 0; overflow: hidden;
+    background: var(--bg); color: var(--ink);
+    font-family: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    transform-origin: 0 0;
+  }
+  .scene { position: absolute; inset: 0; visibility: hidden; }
+
+  /* Scene 1: title */
+  #s1 .title { position: absolute; left: 160px; top: 380px; font-size: 128px; font-weight: 800; letter-spacing: -2px; margin: 0; }
+  #s1 .sub { position: absolute; left: 164px; top: 600px; font-size: 44px; color: var(--muted); margin: 0; }
+  #s1 svg { position: absolute; left: 160px; top: 566px; overflow: visible; }
+
+  /* Scene 2: chart */
+  #s2 .caption { position: absolute; left: 160px; top: 150px; font-size: 64px; font-weight: 700; margin: 0; }
+  #s2 .chart { position: absolute; left: 160px; top: 380px; width: 1000px; height: 480px; border-bottom: 4px solid var(--line); }
+  #s2 .bar { position: absolute; bottom: 0; width: 220px; transform-origin: bottom; border-radius: 12px 12px 0 0; }
+  #s2 .val { position: absolute; width: 220px; text-align: center; font-size: 40px; font-weight: 700; }
+  #s2 .label { position: absolute; bottom: -64px; width: 220px; text-align: center; font-size: 32px; color: var(--muted); }
+  #s2 .count { position: absolute; left: 1320px; top: 420px; font-size: 180px; font-weight: 800; color: var(--accent-2); margin: 0; font-variant-numeric: tabular-nums; }
+  #s2 .unit { position: absolute; left: 1328px; top: 640px; font-size: 44px; color: var(--muted); margin: 0; }
+
+  /* Preview controls, hidden while rendering */
+  #controls { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 12px; align-items: center; padding: 10px 16px; background: rgba(0,0,0,.75); color: #fff; font: 14px system-ui, sans-serif; }
+  #controls input { flex: 1; }
+  .rendering #controls { display: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <section class="scene" id="s1">
+    <h1 class="title">Coded, not generated.</h1>
+    <svg width="1360" height="12" viewBox="0 0 1360 12" aria-hidden="true">
+      <path id="underline" d="M 0 6 L 1360 6" stroke="var(--accent)" stroke-width="10" stroke-linecap="round" fill="none"/>
+    </svg>
+    <p class="sub">Every frame comes from code you can read.</p>
+  </section>
+
+  <section class="scene" id="s2">
+    <p class="caption">Frames per second</p>
+    <div class="chart">
+      <div class="bar" style="left:40px;  height:100%; background:var(--accent)"></div>
+      <div class="bar" style="left:380px; height:100%; background:var(--accent-2)"></div>
+      <div class="bar" style="left:720px; height:100%; background:var(--muted)"></div>
+      <div class="val" style="left:40px">24</div>
+      <div class="val" style="left:380px">30</div>
+      <div class="val" style="left:720px">60</div>
+      <div class="label" style="left:40px">film</div>
+      <div class="label" style="left:380px">default</div>
+      <div class="label" style="left:720px">smooth</div>
+    </div>
+    <p class="count">0</p>
+    <p class="unit">frames in 5 s at 30 fps</p>
+  </section>
+</div>
+
+<div id="controls">
+  <button id="play" type="button">Pause</button>
+  <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Scrub">
+  <span id="time">0.00 s</span>
+</div>
+
+<script>
+/* ---------- Video settings ---------- */
+window.VIDEO = { width: 1920, height: 1080, fps: 30, duration: 5 };
+
+/* ---------- Helpers (all pure) ---------- */
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a) * p;
+const ease = {
+  linear: p => p,
+  inCubic: p => p * p * p,
+  outCubic: p => 1 - Math.pow(1 - p, 3),
+  inOutCubic: p => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+  outBack: p => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); },
+};
+/** Eased progress 0..1 between start and end (seconds). */
+const prog = (t, start, end, fn = ease.inOutCubic) => fn(clamp((t - start) / (end - start)));
+/** Seeded random numbers: const r = rng(7); r() -> 0..1. Create once, outside renderAt. */
+function rng(seed) {
+  return function () {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let r = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+/** Draw an SVG path on: p = 0 hidden, p = 1 fully drawn. */
+function drawOn(path, p) {
+  const L = path.getTotalLength();
+  path.style.strokeDasharray = L;
+  path.style.strokeDashoffset = L * (1 - p);
+}
+function countUp(el, p, from, to, decimals = 0, suffix = '') {
+  el.textContent = lerp(from, to, p).toFixed(decimals) + suffix;
+}
+function typeOn(el, p, text) {
+  el.textContent = text.slice(0, Math.round(text.length * p));
+}
+
+/* ---------- Scenes ----------
+   start/end in seconds. Neighbouring scenes may overlap for a crossfade of `fade` seconds. */
+const $ = sel => document.querySelector(sel);
+const scenes = [
+  { el: $('#s1'), start: 0.0, end: 2.2, draw: drawTitle },
+  { el: $('#s2'), start: 1.9, end: 5.0, draw: drawChart },
+];
+const fade = 0.3;
+
+function drawTitle(t) {           // t is local to the scene
+  const p = prog(t, 0.0, 0.7, ease.outCubic);
+  $('#s1 .title').style.opacity = p;
+  $('#s1 .title').style.transform = `translateY(${lerp(40, 0, p)}px)`;
+  drawOn($('#underline'), prog(t, 0.4, 1.3, ease.inOutCubic));
+  $('#s1 .sub').style.opacity = prog(t, 0.9, 1.4, ease.outCubic);
+}
+
+function drawChart(t) {
+  $('#s2 .caption').style.opacity = prog(t, 0.2, 0.7, ease.outCubic);
+  const values = [24, 30, 60], max = 60, chartHeight = 480;
+  const vals = document.querySelectorAll('#s2 .val');
+  document.querySelectorAll('#s2 .bar').forEach((bar, i) => {
+    const p = prog(t, 0.5 + i * 0.15, 1.3 + i * 0.15, ease.outCubic);
+    const h = p * values[i] / max;
+    bar.style.transform = `scaleY(${h})`;
+    vals[i].style.bottom = (h * chartHeight + 16) + 'px';
+    vals[i].style.opacity = prog(t, 1.1 + i * 0.15, 1.4 + i * 0.15);
+  });
+  countUp($('#s2 .count'), prog(t, 0.6, 2.2, ease.outCubic), 0, 150);
+  $('#s2 .unit').style.opacity = prog(t, 0.6, 1.0);
+}
+
+/* ---------- The contract: one pure function of t ---------- */
+window.renderAt = function (t) {
+  for (const s of scenes) {
+    const visible = t >= s.start && t <= s.end;
+    s.el.style.visibility = visible ? 'visible' : 'hidden';
+    if (!visible) continue;
+    const isFirst = s === scenes[0], isLast = s === scenes[scenes.length - 1];
+    const fadeIn = isFirst ? 1 : clamp((t - s.start) / fade);
+    const fadeOut = isLast ? 1 : clamp((s.end - t) / fade);
+    s.el.style.opacity = Math.min(fadeIn, fadeOut);
+    s.draw(t - s.start);
+  }
+};
+
+/* ---------- Preview player (not used while rendering) ---------- */
+(function preview() {
+  const stage = $('#stage');
+  stage.style.width = VIDEO.width + 'px';
+  stage.style.height = VIDEO.height + 'px';
+  if (window.__RENDERING__) {               // set by scripts/render.py
+    document.documentElement.classList.add('rendering');
+    window.renderAt(0);
+    return;
+  }
+  const fit = () => {
+    const s = Math.min(innerWidth / VIDEO.width, (innerHeight - 48) / VIDEO.height);
+    stage.style.transform = `scale(${s})`;
+  };
+  addEventListener('resize', fit); fit();
+  const scrub = $('#scrub'), label = $('#time'), btn = $('#play');
+  const fixed = new URLSearchParams(location.search).get('t');
+  let playing = fixed === null, t = fixed === null ? 0 : Number(fixed), last = null;
+  const show = () => { window.renderAt(t); scrub.value = Math.round(t / VIDEO.duration * 1000); label.textContent = t.toFixed(2) + ' s'; btn.textContent = playing ? 'Pause' : 'Play'; };
+  btn.onclick = () => { playing = !playing; last = null; show(); };
+  scrub.oninput = () => { playing = false; t = scrub.value / 1000 * VIDEO.duration; show(); };
+  function tick(now) {
+    if (playing) { if (last !== null) t = (t + (now - last) / 1000) % VIDEO.duration; last = now; show(); }
+    requestAnimationFrame(tick);
+  }
+  show(); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

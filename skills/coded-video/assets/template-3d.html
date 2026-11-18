@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Coded video (3D)</title>
+<!--
+  3D coded video starter (Three.js, WebGL).
+  Same contract as template.html:
+    window.VIDEO    = { width, height, fps, duration }
+    window.renderAt = function (t) { ... }   pure function of t in seconds
+  Needs the vendor/three folder next to this file (copy assets/vendor along with it).
+  ES modules do not load from file:// pages. Preview with a local server from this folder:
+    python -m http.server 8000      then open http://127.0.0.1:8000/<this file>?t=2.5
+  scripts/render.py serves the folder itself.
+-->
+<style>
+  :root { --ink: #f5f1ea; --muted: #9fb0c3; --accent: #ff8a4c; --bg-top: #1b2a3a; --bg-bottom: #0b121a; }
+  html, body { margin: 0; background: #000; }
+  #stage { position: absolute; left: 0; top: 0; overflow: hidden; transform-origin: 0 0;
+           background: radial-gradient(120% 90% at 50% 30%, var(--bg-top), var(--bg-bottom));
+           font-family: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: var(--ink); }
+  #gl { position: absolute; inset: 0; }
+  /* HTML overlay: crisp text on top of the 3D canvas */
+  .overlay { position: absolute; inset: 0; pointer-events: none; }
+  .title { position: absolute; left: 140px; top: 120px; margin: 0; font-size: 96px; font-weight: 800; letter-spacing: -1.5px; }
+  .sub { position: absolute; left: 144px; top: 236px; margin: 0; font-size: 40px; color: var(--muted); }
+  .callout { position: absolute; font-size: 34px; font-weight: 700; white-space: nowrap; }
+  .callout small { display: block; font-size: 26px; font-weight: 500; color: var(--muted); }
+  svg.lines { position: absolute; inset: 0; overflow: visible; }
+  #controls { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 12px; align-items: center; padding: 10px 16px; background: rgba(0,0,0,.75); color: #fff; font: 14px system-ui, sans-serif; }
+  #controls input { flex: 1; }
+  .rendering #controls { display: none; }
+</style>
+<script type="importmap">
+  { "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<div id="stage">
+  <canvas id="gl"></canvas>
+  <div class="overlay">
+    <svg class="lines"><line id="leader" stroke="#ff8a4c" stroke-width="4" stroke-linecap="round"/><circle id="dot" r="9" fill="#ff8a4c"/></svg>
+    <h1 class="title">Real 3D, still coded.</h1>
+    <p class="sub">Lit, shadowed and rendered frame by frame.</p>
+    <div class="callout" id="callout">Soft studio light<small>RoomEnvironment + one key light</small></div>
+  </div>
+</div>
+<div id="controls">
+  <button id="play" type="button">Pause</button>
+  <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Scrub">
+  <span id="time">0.00 s</span>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/RoomEnvironment.js';
+
+const VIDEO = { width: 1920, height: 1080, fps: 30, duration: 5 };
+
+/* ---------- Helpers (pure) ---------- */
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a) * p;
+const ease = {
+  linear: p => p,
+  inCubic: p => p * p * p,
+  outCubic: p => 1 - Math.pow(1 - p, 3),
+  inOutCubic: p => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+  outBack: p => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); },
+};
+const prog = (t, start, end, fn = ease.inOutCubic) => fn(clamp((t - start) / (end - start)));
+const $ = s => document.querySelector(s);
+
+/* ---------- Renderer, camera, light ---------- */
+const stage = $('#stage');
+stage.style.width = VIDEO.width + 'px';
+stage.style.height = VIDEO.height + 'px';
+const canvas = $('#gl');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(VIDEO.width, VIDEO.height, false);
+canvas.style.width = VIDEO.width + 'px';
+canvas.style.height = VIDEO.height + 'px';
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping;   // keeps brand colours close to their hex values
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.VSMShadowMap;       // soft shadows that honour shadow.radius
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;   // soft studio reflections
+scene.environmentIntensity = 0.55;   // keep colours saturated; the key light does the modelling
+
+const camera = new THREE.PerspectiveCamera(30, VIDEO.width / VIDEO.height, 0.1, 100);
+
+const key = new THREE.DirectionalLight(0xffffff, 2.2);
+key.position.set(3, 6, 4);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.left = -3; key.shadow.camera.right = 3; key.shadow.camera.top = 3; key.shadow.camera.bottom = -3;
+key.shadow.radius = 12;
+key.shadow.blurSamples = 16;
+key.shadow.bias = -0.0005;
+scene.add(key);
+
+/* ---------- Objects ---------- */
+// Ground that only shows the shadow, so the background gradient stays visible.
+const ground = new THREE.Mesh(new THREE.CircleGeometry(4, 64), new THREE.ShadowMaterial({ opacity: 0.28 }));
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// A label texture drawn on a 2D canvas: any text, drawn by code.
+function labelTexture(text, sub) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 768;
+  const g = c.getContext('2d');
+  g.fillStyle = '#f5f1ea'; g.fillRect(0, 0, 512, 768);
+  g.fillStyle = '#ff8a4c'; g.fillRect(0, 520, 512, 248);
+  g.fillStyle = '#16212c'; g.font = '800 92px system-ui, Segoe UI, Arial'; g.textAlign = 'center';
+  g.fillText(text, 256, 300);
+  g.font = '500 40px system-ui, Segoe UI, Arial'; g.fillStyle = '#5b6b7c';
+  g.fillText(sub, 256, 370);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  return tex;
+}
+
+const product = new THREE.Group();
+scene.add(product);
+const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf2ede4, roughness: 0.45, metalness: 0.0 });
+const faceMat = new THREE.MeshStandardMaterial({ map: labelTexture('PRODUCT', 'your label here'), roughness: 0.5 });
+const box = new THREE.Mesh(new RoundedBoxGeometry(1.0, 1.5, 0.42, 6, 0.08), bodyMat);
+box.position.y = 0.75;
+box.castShadow = true;
+product.add(box);
+const face = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 1.29), faceMat);
+face.position.set(0, 0.75, 0.212);
+product.add(face);
+
+const ring = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.03, 16, 128),
+  new THREE.MeshStandardMaterial({ color: 0xff6a1a, roughness: 0.35, metalness: 0.0 }));
+ring.rotation.x = Math.PI / 2;
+ring.position.y = 0.06;
+ring.castShadow = true;
+scene.add(ring);
+
+// A point in 3D that the HTML callout is pinned to.
+const anchor = new THREE.Object3D();
+anchor.position.set(0.5, 1.45, 0.21);
+product.add(anchor);
+
+/* ---------- Project a 3D point to stage pixels ---------- */
+const v = new THREE.Vector3();
+function toScreen(obj) {
+  obj.getWorldPosition(v).project(camera);
+  return { x: (v.x + 1) / 2 * VIDEO.width, y: (1 - v.y) / 2 * VIDEO.height };
+}
+
+/* ---------- The contract ---------- */
+function renderAt(t) {
+  // Camera: slow orbit and push-in. Everything is a function of t.
+  const orbit = lerp(-0.55, 0.35, prog(t, 0, VIDEO.duration, ease.inOutCubic));
+  const dist = lerp(7.4, 6.3, prog(t, 0, VIDEO.duration, ease.outCubic));
+  camera.position.set(Math.sin(orbit) * dist, lerp(2.6, 2.1, prog(t, 0, 5)), Math.cos(orbit) * dist);
+  camera.lookAt(-0.6, 0.85, 0);   // aim left of the product so it sits right of centre, clear of the title
+
+  // Product drops in and settles.
+  const drop = prog(t, 0.0, 0.9, ease.outBack);
+  product.position.y = lerp(1.6, 0, drop);
+  product.rotation.y = lerp(-0.6, -0.15, prog(t, 0, 1.4, ease.outCubic));
+  ring.scale.setScalar(lerp(0.6, 1, prog(t, 0.5, 1.4, ease.outCubic)));
+  ring.material.opacity = 1;
+  ring.rotation.z = t * 0.6;
+
+  renderer.render(scene, camera);
+
+  // Overlay text.
+  const pt = prog(t, 0.6, 1.3, ease.outCubic);
+  $('.title').style.opacity = pt;
+  $('.title').style.transform = `translateY(${lerp(30, 0, pt)}px)`;
+  $('.sub').style.opacity = prog(t, 1.0, 1.6, ease.outCubic);
+
+  // Callout pinned to the 3D anchor: dot, leader line, label kept inside a 96 px safe margin.
+  const SAFE = 96;
+  const a = toScreen(anchor);
+  const label = $('#callout');
+  const lx = Math.min(a.x + 168, VIDEO.width - SAFE - label.offsetWidth);
+  const ly = clamp(a.y - 136, SAFE, VIDEO.height - SAFE - label.offsetHeight);
+  label.style.left = lx + 'px';
+  label.style.top = ly + 'px';
+  label.style.opacity = prog(t, 2.7, 3.2, ease.outCubic);
+  const end = { x: lx - 14, y: ly + 26 };            // line stops just before the label
+  const pc = prog(t, 2.2, 2.9, ease.outCubic);
+  const line = $('#leader');
+  line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+  line.setAttribute('x2', lerp(a.x, end.x, pc)); line.setAttribute('y2', lerp(a.y, end.y, pc));
+  line.style.opacity = pc > 0 ? 1 : 0;
+  $('#dot').setAttribute('cx', a.x); $('#dot').setAttribute('cy', a.y);
+  $('#dot').style.opacity = prog(t, 2.0, 2.3);
+}
+
+window.VIDEO = VIDEO;
+window.renderAt = renderAt;
+
+/* ---------- Preview player (not used while rendering) ---------- */
+if (window.__RENDERING__) {
+  document.documentElement.classList.add('rendering');
+  renderAt(0);
+} else {
+  const fit = () => { stage.style.transform = `scale(${Math.min(innerWidth / VIDEO.width, (innerHeight - 48) / VIDEO.height)})`; };
+  addEventListener('resize', fit); fit();
+  const scrub = $('#scrub'), label = $('#time'), btn = $('#play');
+  const fixed = new URLSearchParams(location.search).get('t');
+  let playing = fixed === null, t = fixed === null ? 0 : Number(fixed), last = null;
+  const show = () => { renderAt(t); scrub.value = Math.round(t / VIDEO.duration * 1000); label.textContent = t.toFixed(2) + ' s'; btn.textContent = playing ? 'Pause' : 'Play'; };
+  btn.onclick = () => { playing = !playing; last = null; show(); };
+  scrub.oninput = () => { playing = false; t = scrub.value / 1000 * VIDEO.duration; show(); };
+  const tick = now => { if (playing) { if (last !== null) t = (t + (now - last) / 1000) % VIDEO.duration; last = now; show(); } requestAnimationFrame(tick); };
+  show(); requestAnimationFrame(tick);
+}
+</script>
+</body>
+</html>

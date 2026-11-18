@@ -1,0 +1,12 @@
+{
+  "name": "coded-video",
+  "version": "1.0.0",
+  "description": "Coded, not generated: short explainer and demo videos written as HTML/CSS/SVG/JS or real lit 3D (Three.js) and rendered frame by frame to MP4. Writes a scene-by-scene brief first, builds only after your go.",
+  "author": {
+    "name": "necromancer124"
+  },
+  "homepage": "https://github.com/necromancer124/coded-video",
+  "repository": "https://github.com/necromancer124/coded-video",
+  "license": "MIT",
+  "keywords": ["video", "animation", "motion-graphics", "explainer", "demo", "mp4", "playwright", "ffmpeg"]
+}
