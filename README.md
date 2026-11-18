@@ -11,6 +11,12 @@ coded-video is an [Agent Skill](https://agentskills.io/specification) and Claude
 
 ![3D tutorial: a noodle cup is opened, filled from a kettle, closed, timed and stirred](docs/noodle-tutorial-3d.gif)
 
+**Engineering diagrams in motion**: a few seconds from a longer coded explainer, showing what the skill can draw: isometric 3D parts that assemble themselves, labelled callouts, camera cones sweeping a scene, laser beams and live readouts that update every frame.
+
+![Coded explainer clips: parts assemble with labels, camera cones sweep, lasers align while readouts update](docs/align-highlights.gif)
+
+**The two starters** that ship with the skill, rendered as they are:
+
 | 3D starter (`template-3d.html`) | 2D starter (`template.html`) |
 | --- | --- |
 | ![3D starter: a lit product on a turntable with a pinned callout](docs/starter-3d.gif) | ![2D starter: title, bar chart and counter](docs/starter-2d.gif) |
