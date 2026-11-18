@@ -66,7 +66,7 @@ python skills/coded-video/scripts/render.py skills/coded-video/assets/template.h
 python skills/coded-video/scripts/render.py skills/coded-video/assets/template-3d.html --output output/starter-3d.mp4 --sheet output/starter-3d-sheet.png
 ```
 
-Useful flags: `--sheet sheet.png` for a one-frame-per-second contact sheet, `--stills 1.5,4.9` for single frames, `--scale 0.5` for a half-size draft, `--start`/`--end` to render one section, `--fps` to override the page, `--audio track.mp3` to add a soundtrack, `--gl swiftshader` for software 3D with identical pixels on every machine (the default uses the GPU and is 3–4× faster). The script prints the frame count, duration and size measured from the finished file.
+Useful flags: `--sheet sheet.png` for a one-frame-per-second contact sheet, `--stills 1.5,4.9` for single frames, `--scale 0.5` for a half-size draft, `--start`/`--end` to render one section, `--fps` to override the page, `--audio track.mp3` to add a soundtrack, `--gl swiftshader` for software-only 3D that looks the same on any machine (the default uses the GPU and is 3–4× faster). The script prints the frame count, duration and size measured from the finished file.
 
 The renderer serves the page's own folder on a private local address and blocks every other host unless you pass `--allow-network`, so bundle fonts, images and models locally. **Render trusted HTML only:** blocking the network is not a sandbox.
 

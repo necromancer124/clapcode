@@ -53,7 +53,7 @@ def parse_args(argv=None):
     p.add_argument('--allow-network', action='store_true', help='Allow remote HTTP(S) requests')
     p.add_argument('--gl', choices=('gpu', 'swiftshader'), default='gpu',
                    help='WebGL for 3D pages: gpu (default, fast, falls back to software when there is no GPU) '
-                        'or swiftshader (software only: slower, but identical pixels on every machine)')
+                        'or swiftshader (software only: slower, but looks the same on any machine)')
     args = p.parse_args(argv)
 
     source = Path(args.input).expanduser().resolve()

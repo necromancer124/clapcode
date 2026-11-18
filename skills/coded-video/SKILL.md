@@ -90,7 +90,7 @@ Then render:
 python "SKILL_DIR/scripts/render.py" video/index.html --output output/video.mp4
 ```
 
-Useful options: `--sheet output/sheet.png` to also write a contact sheet (one frame per second, `--sheet-every` to change), `--scale 0.5` for a fast half-size draft, `--start`/`--end` to render one section, `--fps` to override the page, `--audio track.mp3` to add a soundtrack (the video length wins), `--gl swiftshader` for software WebGL with identical pixels on every machine (the default `--gl gpu` is faster), `--browser chrome` or `--browser msedge` to use an installed browser, `--allow-network` only with explicit permission. The script prints JSON with the frame count, duration, and size measured from the finished file.
+Useful options: `--sheet output/sheet.png` to also write a contact sheet (one frame per second, `--sheet-every` to change), `--scale 0.5` for a fast half-size draft, `--start`/`--end` to render one section, `--fps` to override the page, `--audio track.mp3` to add a soundtrack (the video length wins), `--gl swiftshader` for software-only WebGL that looks the same on any machine (the default `--gl gpu` is faster), `--browser chrome` or `--browser msedge` to use an installed browser, `--allow-network` only with explicit permission. The script prints JSON with the frame count, duration, and size measured from the finished file.
 
 The renderer serves the HTML file's folder on a private 127.0.0.1 address and blocks every other host, so pages behave like a local website (modules and `fetch` work) without reaching the internet.
 
