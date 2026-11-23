@@ -68,7 +68,8 @@ class PackageTests(unittest.TestCase):
                 # Only the plugin icon and showcase media in docs/ belong in the repo.
                 allowed = path == ROOT / '.claude-plugin/icon.png' or path.parent == ROOT / 'docs'
                 self.assertTrue(allowed, f'Unexpected media file: {path}')
-                self.assertLess(path.stat().st_size, 10_000_000, f'Media file too large for the repo: {path}')
+                # Anthropic's plugin directory refuses any file over 5 MiB.
+                self.assertLess(path.stat().st_size, 5 * 1024 * 1024, f'Media file too large for the plugin directory: {path}')
                 continue
             text = path.read_text(encoding='utf-8')
             for token in forbidden:
