@@ -1,14 +1,14 @@
 {
-  "name": "coded-video",
+  "name": "clapcode",
   "owner": {
     "name": "necromancer124"
   },
   "metadata": {
-    "description": "coded-video: short explainer and demo videos made with code"
+    "description": "clapcode: short explainer and demo videos made with code"
   },
   "plugins": [
     {
-      "name": "coded-video",
+      "name": "clapcode",
       "source": "./",
       "description": "Coded, not generated: short explainer and demo videos written as HTML/CSS/SVG/JS or real lit 3D (Three.js) and rendered frame by frame to MP4. Writes a scene-by-scene brief first, builds only after your go.",
       "version": "1.0.0",
