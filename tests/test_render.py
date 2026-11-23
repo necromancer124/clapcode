@@ -10,9 +10,9 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-RENDER = ROOT / 'skills/clapcode/scripts/render.py'
-TEMPLATE = ROOT / 'skills/clapcode/assets/template.html'
-TEMPLATE_3D = ROOT / 'skills/clapcode/assets/template-3d.html'
+RENDER = ROOT / 'plugins/clapcode/skills/clapcode/scripts/render.py'
+TEMPLATE = ROOT / 'plugins/clapcode/skills/clapcode/assets/template.html'
+TEMPLATE_3D = ROOT / 'plugins/clapcode/skills/clapcode/assets/template-3d.html'
 BROWSER = os.environ.get('RENDER_BROWSER', 'chromium')
 
 try:
