@@ -86,6 +86,12 @@ Useful flags: `--sheet sheet.png` for a one-frame-per-second contact sheet, `--s
 
 The renderer serves the page's own folder on a private local address and blocks every other host unless you pass `--allow-network`, so bundle fonts, images and models locally. **Render trusted HTML only:** blocking the network is not a sandbox.
 
+## What the plugin runs, sends and fetches
+- **Runs, only when you or your assistant render a video:** `skills/clapcode/scripts/render.py` with your local Python. It starts a headless Chromium, Chrome or Edge through Playwright, serves the folder of the HTML page you render on a private `127.0.0.1` port while it runs, and pipes the frames to your local `ffmpeg`.
+- **Sends:** nothing. There are no hooks, no MCP servers, no telemetry and no API keys. Rendered files stay on your machine.
+- **Fetches:** nothing by default. The renderer blocks every request that is not for the local page folder, unless you pass `--allow-network`. Three.js is bundled in `skills/clapcode/assets/vendor/three/` (readable, unminified, MIT) so 3D pages render offline.
+- **Installs:** nothing on its own. Playwright, a browser and ffmpeg are installed by you, with the commands above.
+
 ## Is it "AI-generated"?
 It's made by an AI assistant writing code. It's not synthetic footage: no model invents pixels, and the renderer adds no watermark. If you publish it, check the disclosure rules of the platform you post on. They differ by platform and change over time.
 
