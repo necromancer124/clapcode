@@ -69,14 +69,12 @@ When the user wants something to show people, hold the build to this before call
 Done: opening the HTML in a browser plays the video; the scrub bar and `?t=2.5` show any moment.
 
 ## Phase 3: render
-Install the renderer deliberately; nothing is installed as a side effect of reading this skill:
+The renderer needs three things the user installs deliberately; nothing is installed as a side effect of reading this skill:
+- Playwright for Python and its Chromium browser: follow the official guide at https://playwright.dev/python/docs/intro. An already-installed Chrome or Edge also works with `--browser chrome` or `--browser msedge`.
+- ffmpeg on PATH: get it from https://ffmpeg.org/download.html, or pass `--ffmpeg PATH`.
+- Python 3.10 or later.
 
-```sh
-python -m pip install playwright
-python -m playwright install chromium
-```
-
-ffmpeg must be on PATH (for example `winget install Gyan.FFmpeg`, `brew install ffmpeg`, or `sudo apt install ffmpeg`), or pass `--ffmpeg PATH`.
+If one is missing, tell the user which one and link the guide; do not install it on your own.
 
 Check stills before rendering the whole video. Pick a time in the middle of each scene, plus scene boundaries:
 

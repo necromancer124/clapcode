@@ -97,8 +97,8 @@ def parse_args(argv=None):
 def find_ffmpeg(explicit):
     exe = explicit or shutil.which('ffmpeg')
     if not exe or not Path(exe).exists() and not shutil.which(exe):
-        raise RuntimeError('ffmpeg not found. Install it (winget install Gyan.FFmpeg, brew install ffmpeg, '
-                           'or sudo apt install ffmpeg) or pass --ffmpeg PATH.')
+        raise RuntimeError('ffmpeg not found. Install it from https://ffmpeg.org/download.html '
+                           'or pass --ffmpeg PATH.')
     return exe
 
 
@@ -156,8 +156,8 @@ def render(args):
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
-        raise RuntimeError('Install Playwright: python -m pip install playwright, '
-                           'then python -m playwright install chromium') from None
+        raise RuntimeError('Playwright for Python is not installed. Follow '
+                           'https://playwright.dev/python/docs/intro') from None
     ffmpeg = find_ffmpeg(args.ffmpeg) if args.output else None
     errors, blocked, result = [], [], {}
     started = time.time()
@@ -176,7 +176,8 @@ def render(args):
         try:
             browser = pw.chromium.launch(**launch)
         except Exception as exc:
-            raise RuntimeError('Cannot launch browser. Run python -m playwright install chromium, or use '
+            raise RuntimeError('Cannot launch browser. Install the Playwright Chromium browser '
+                               '(https://playwright.dev/python/docs/browsers), or use '
                                '--browser chrome or --browser msedge. ' + str(exc)) from None
         try:
             context = browser.new_context(viewport={'width': 1920, 'height': 1080}, device_scale_factor=args.scale)

@@ -55,7 +55,7 @@ On Claude Code older than 2.1.275, use two steps instead:
 
 Then start a new session. The skill loads as `clapcode:clapcode`, and Claude picks it up on its own when you ask for an explainer, a demo video or an animation.
 
-**Other assistants:** copy `skills/clapcode/` into your client's skills folder (for example `.claude/skills/` or `.agents/skills/`), or point the assistant at `skills/clapcode/SKILL.md`. It needs file and shell tools to build and render.
+**Other assistants:** copy `plugins/clapcode/skills/clapcode/` into your client's skills folder (for example `.claude/skills/` or `.agents/skills/`), or point the assistant at `plugins/clapcode/skills/clapcode/SKILL.md`. It needs file and shell tools to build and render.
 
 ## Requirements for rendering
 - Python 3.10+
@@ -78,8 +78,8 @@ Nothing is installed automatically.
 Try the included 5-second starters, one 2D and one 3D:
 
 ```sh
-python skills/clapcode/scripts/render.py skills/clapcode/assets/template.html --output output/starter.mp4
-python skills/clapcode/scripts/render.py skills/clapcode/assets/template-3d.html --output output/starter-3d.mp4 --sheet output/starter-3d-sheet.png
+python plugins/clapcode/skills/clapcode/scripts/render.py plugins/clapcode/skills/clapcode/assets/template.html --output output/starter.mp4
+python plugins/clapcode/skills/clapcode/scripts/render.py plugins/clapcode/skills/clapcode/assets/template-3d.html --output output/starter-3d.mp4 --sheet output/starter-3d-sheet.png
 ```
 
 Useful flags: `--sheet sheet.png` for a one-frame-per-second contact sheet, `--stills 1.5,4.9` for single frames, `--scale 0.5` for a half-size draft, `--start`/`--end` to render one section, `--fps` to override the page, `--audio track.mp3` to add a soundtrack, `--gl swiftshader` for software-only 3D that looks the same on any machine (the default uses the GPU and is 3–4× faster). The script prints the frame count, duration and size measured from the finished file.
@@ -87,9 +87,9 @@ Useful flags: `--sheet sheet.png` for a one-frame-per-second contact sheet, `--s
 The renderer serves the page's own folder on a private local address and blocks every other host unless you pass `--allow-network`, so bundle fonts, images and models locally. **Render trusted HTML only:** blocking the network is not a sandbox.
 
 ## What the plugin runs, sends and fetches
-- **Runs, only when you or your assistant render a video:** `skills/clapcode/scripts/render.py` with your local Python. It starts a headless Chromium, Chrome or Edge through Playwright, serves the folder of the HTML page you render on a private `127.0.0.1` port while it runs, and pipes the frames to your local `ffmpeg`.
+- **Runs, only when you or your assistant render a video:** `plugins/clapcode/skills/clapcode/scripts/render.py` with your local Python. It starts a headless Chromium, Chrome or Edge through Playwright, serves the folder of the HTML page you render on a private `127.0.0.1` port while it runs, and pipes the frames to your local `ffmpeg`.
 - **Sends:** nothing. There are no hooks, no MCP servers, no telemetry and no API keys. Rendered files stay on your machine.
-- **Fetches:** nothing by default. The renderer blocks every request that is not for the local page folder, unless you pass `--allow-network`. Three.js is bundled in `skills/clapcode/assets/vendor/three/` (readable, unminified, MIT) so 3D pages render offline.
+- **Fetches:** nothing by default. The renderer blocks every request that is not for the local page folder, unless you pass `--allow-network`. Three.js is bundled in `plugins/clapcode/skills/clapcode/assets/vendor/three/` (readable, unminified, MIT) so 3D pages render offline.
 - **Installs:** nothing on its own. Playwright, a browser and ffmpeg are installed by you, with the commands above.
 
 ## Is it "AI-generated"?
@@ -106,4 +106,4 @@ python -m unittest discover -s tests -v
 The tests check the skill metadata, the plugin manifests and a real render: frame count, size, duration, and that the same time always gives the same frame.
 
 ## License
-MIT. See [LICENSE](LICENSE). Bundled three.js 0.187.0 is MIT-licensed by the three.js authors; see `skills/clapcode/assets/vendor/three/LICENSE`.
+MIT. See [LICENSE](LICENSE). Bundled three.js 0.187.0 is MIT-licensed by the three.js authors; see `plugins/clapcode/skills/clapcode/assets/vendor/three/LICENSE`.

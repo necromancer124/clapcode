@@ -1,6 +1,6 @@
 {
   "name": "clapcode",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Coded, not generated: short explainer and demo videos written as HTML/CSS/SVG/JS or real lit 3D (Three.js) and rendered frame by frame to MP4. Writes a scene-by-scene brief first, builds only after your go.",
   "author": {
     "name": "necromancer124"
@@ -8,5 +8,14 @@
   "homepage": "https://github.com/necromancer124/clapcode",
   "repository": "https://github.com/necromancer124/clapcode",
   "license": "MIT",
-  "keywords": ["video", "animation", "motion-graphics", "explainer", "demo", "mp4", "playwright", "ffmpeg"]
+  "keywords": [
+    "video",
+    "animation",
+    "motion-graphics",
+    "explainer",
+    "demo",
+    "mp4",
+    "playwright",
+    "ffmpeg"
+  ]
 }
