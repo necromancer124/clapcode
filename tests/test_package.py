@@ -6,7 +6,7 @@ import unittest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL = ROOT / 'skills/coded-video/SKILL.md'
+SKILL = ROOT / 'skills/clapcode/SKILL.md'
 
 
 class PackageTests(unittest.TestCase):
@@ -37,22 +37,22 @@ class PackageTests(unittest.TestCase):
         self.assertIn('brief.md', text)
 
     def test_vendored_three_is_complete_and_licensed(self):
-        vendor = ROOT / 'skills/coded-video/assets/vendor/three'
+        vendor = ROOT / 'skills/clapcode/assets/vendor/three'
         for name in ('three.module.js', 'three.core.js', 'LICENSE', 'VERSION.txt',
                      'addons/RoundedBoxGeometry.js', 'addons/RoomEnvironment.js'):
             self.assertTrue((vendor / name).is_file(), name)
         self.assertIn('MIT License', (vendor / 'LICENSE').read_text(encoding='utf-8'))
         self.assertIn("from './three.core.js'", (vendor / 'three.module.js').read_text(encoding='utf-8'))
-        page = (ROOT / 'skills/coded-video/assets/template-3d.html').read_text(encoding='utf-8')
+        page = (ROOT / 'skills/clapcode/assets/template-3d.html').read_text(encoding='utf-8')
         self.assertIn('./vendor/three/three.module.js', page)
 
     def test_claude_plugin_manifests_match(self):
         plugin = json.loads((ROOT / '.claude-plugin/plugin.json').read_text(encoding='utf-8'))
         market = json.loads((ROOT / '.claude-plugin/marketplace.json').read_text(encoding='utf-8'))
-        self.assertEqual(plugin['name'], 'coded-video')
+        self.assertEqual(plugin['name'], 'clapcode')
         self.assertRegex(plugin['version'], r'^\d+\.\d+\.\d+$')
         self.assertEqual(plugin['license'], 'MIT')
-        self.assertIn('github.com/necromancer124/coded-video', plugin['repository'])
+        self.assertIn('github.com/necromancer124/clapcode', plugin['repository'])
         self.assertTrue(market['owner']['name'])
         entries = [p for p in market['plugins'] if p['name'] == plugin['name']]
         self.assertEqual(len(entries), 1)
